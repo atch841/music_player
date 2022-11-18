@@ -14,7 +14,7 @@ def get_music(vid):
     if vid + ".mp3" not in os.listdir('/home/ubuntu/music/'):
         yt.streams.get_audio_only().download(filename=_filename)
 
-DEVELOPER_KEY = 'AIzaSyARzolKLklSS7nG7GcBYRvrhh8dQ_u7AYg'
+DEVELOPER_KEY = ''
 youtube = build('youtube', 'v3', developerKey=DEVELOPER_KEY)
 
 
