@@ -32,6 +32,7 @@ def download_music():
     for song in json.loads(r.text)['data']['charts']['newrelease']:
         song_name.append(song['song_name'])
 
+    print('songs:', song_name)
 
     for idx, song in enumerate(song_name):
         with open(DOWNLOAD_STATUS, 'w') as file:
