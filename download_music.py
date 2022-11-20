@@ -16,15 +16,29 @@ def get_music(vid):
     if vid + ".mp3" not in os.listdir('/home/ubuntu/music/'):
         yt.streams.get_audio_only().download(filename=_filename)
 
-def download_music():
-    with open('/home/ubuntu/.dev_key',  'r') as file:
-        developerKey = file.read().strip()
-    youtube = build('youtube', 'v3', developerKey=developerKey)
 
+def get_song(song_name):
     if os.path.exists(MUSIC_META):
         music_meta = json.load(open(MUSIC_META, 'r'))
     else:
         music_meta = {}
+
+    with open('/home/ubuntu/.dev_key',  'r') as file:
+        developerKey = file.read().strip()
+    youtube = build('youtube', 'v3', developerKey=developerKey)
+
+    request = youtube.search().list(part="snippet",q=song_name)
+    response = request.execute()
+
+    vid = response['items'][0]['id']['videoId']
+    if vid in music_meta.keys():
+        return
+    get_music(vid)
+    music_meta[vid] = {'name': song_name, 'volume': 100}
+    json.dump(music_meta, open(MUSIC_META, 'w'))
+    
+
+def download_music():
 
     r = requests.get('https://kma.kkbox.com/charts/api/v1/yearly?category=297&lang=tc&limit=100&terr=tw&type=newrelease&year=2022')
 
@@ -38,14 +52,8 @@ def download_music():
         with open(DOWNLOAD_STATUS, 'w') as file:
             file.write(f'{idx}/{len(song_name)}')
 
-        request = youtube.search().list(part="snippet",q=song)
-        response = request.execute()
+        get_song(song)
+    os.remove(DOWNLOAD_STATUS)
 
-        vid = response['items'][0]['id']['videoId']
-        get_music(vid)
-        music_meta[vid] = {'name': song, 'volume': 100}
-        json.dump(music_meta, open(MUSIC_META, 'w'))
-
-
-if __name__ == '__maiu__':
+if __name__ == '__main__':
     download_music()
