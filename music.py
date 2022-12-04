@@ -11,17 +11,19 @@ now = ''
 while True:
     with open(MSTATUS, 'r') as file:
         cmd = file.readline().strip()
+    print(cmd)
     if cmd == 'play':
         try:
-            ind = random.randint(0, len(os.listdir(MUSIC_PATH) - 1))
+            ind = random.randint(0, len(os.listdir(MUSIC_PATH)) - 1)
             print('omxplayer-pi ' + MUSIC_PATH + os.listdir(MUSIC_PATH)[ind])
             now = MUSIC_PATH + os.listdir(MUSIC_PATH)[ind]
             os.system('omxplayer-pi ' + MUSIC_PATH + os.listdir(MUSIC_PATH)[ind])
-        except:
-            print('error')
+        except Exception as e:
+            print('error', e)
     elif cmd == 'delete':
         if now:
             os.remove(now)
+            print('remove', now)
         with open(MSTATUS, 'w') as file:
             file.write('play')
     time.sleep(1)
