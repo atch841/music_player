@@ -2,32 +2,40 @@ from flask import Flask
 from download_music import download_music, DOWNLOAD_STATUS
 from threading import Thread
 import os
+import time
+
+from utils import read_log
+from config import MSTATUS
 
 app = Flask(__name__)
 
 
+@app.route("/log")
+def log():
+    return read_log()
+
 @app.route("/play")
 def play():
-    with open('/home/ubuntu/mstatus', 'w') as file:
+    with open(MSTATUS, 'w') as file:
         file.write('play')
 
     return 'play'
 
 @app.route("/stop")
 def stop():
-    with open('/home/ubuntu/mstatus', 'w') as file:
+    with open(MSTATUS, 'w') as file:
         file.write('stop')
     return 'stop'
 
 @app.route("/delete")
 def delete():
-    with open('/home/ubuntu/mstatus', 'w') as file:
+    with open(MSTATUS, 'w') as file:
         file.write('delete')
     return 'delete'
 
 @app.route('/download')
 def download():
-    if os.path.exists(DOWNLOAD_STATUS):
+    if os.path.exists(DOWNLOAD_STATUS) and time.time() - os.path.getmtime(DOWNLOAD_STATUS) < 60*60:
         return 'already downloading'
     else:
         download_thread = Thread(target=download_music)

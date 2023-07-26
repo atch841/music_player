@@ -4,26 +4,31 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from pytube import YouTube
 import os
+import traceback
 
-DOWNLOAD_STATUS = '/home/ubuntu/download_status'
-MUSIC_META = '/home/ubuntu/music_meta'
+from config import DOWNLOAD_STATUS, MUSIC_META, VID_LOOKUP, MUSIC_PATH, DEV_KEY
+from config import SONG_URL
+from utils import log
+
 
 def get_music(vid):
     url = f"https://www.youtube.com/watch?v={vid}"
     yt = YouTube(url)
     print(vid + ".mp3")
-    _filename = '/home/ubuntu/music/' + vid + ".mp3"
-    if vid + ".mp3" not in os.listdir('/home/ubuntu/music/'):
+    _filename = MUSIC_PATH + vid + ".mp3"
+    if vid + ".mp3" not in os.listdir(MUSIC_PATH):
         yt.streams.get_audio_only().download(filename=_filename)
 
-
-def get_song(song_name):
-    if os.path.exists(MUSIC_META):
-        music_meta = json.load(open(MUSIC_META, 'r'))
+def get_vid(song_name):
+    if os.path.exists(VID_LOOKUP):
+        name_to_vid = json.load(open(VID_LOOKUP, 'r'))
     else:
-        music_meta = {}
+        name_to_vid = {}
 
-    with open('/home/ubuntu/.dev_key',  'r') as file:
+    if song_name in name_to_vid.keys():
+        return name_to_vid[song_name]
+
+    with open(DEV_KEY,  'r') as file:
         developerKey = file.read().strip()
     youtube = build('youtube', 'v3', developerKey=developerKey)
 
@@ -31,6 +36,20 @@ def get_song(song_name):
     response = request.execute()
 
     vid = response['items'][0]['id']['videoId']
+
+    name_to_vid[song_name] = vid
+    json.dump(name_to_vid, open(VID_LOOKUP, 'w'))
+
+    return vid
+
+def get_song(song_name):
+    if os.path.exists(MUSIC_META):
+        music_meta = json.load(open(MUSIC_META, 'r'))
+    else:
+        music_meta = {}
+
+    vid = get_vid(song_name)
+
     if vid in music_meta.keys():
         return
     get_music(vid)
@@ -39,8 +58,9 @@ def get_song(song_name):
     
 
 def download_music():
+    os.makedirs(os.path.dirname(DOWNLOAD_STATUS), exist_ok=True)
 
-    r = requests.get('https://kma.kkbox.com/charts/api/v1/yearly?category=297&lang=tc&limit=100&terr=tw&type=newrelease&year=2022')
+    r = requests.get(SONG_URL)
 
     song_name = []
     for song in json.loads(r.text)['data']['charts']['newrelease']:
@@ -51,8 +71,12 @@ def download_music():
     for idx, song in enumerate(song_name):
         with open(DOWNLOAD_STATUS, 'w') as file:
             file.write(f'{idx}/{len(song_name)}')
+        log(f'downloading {song} ({idx}/{len(song_name)})')
 
-        get_song(song)
+        try:
+            get_song(song)
+        except  Exception:
+            log(str(traceback.format_exc()))
     os.remove(DOWNLOAD_STATUS)
 
 if __name__ == '__main__':
