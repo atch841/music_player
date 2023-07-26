@@ -10,6 +10,9 @@ from config import DOWNLOAD_STATUS, MUSIC_META, VID_LOOKUP, MUSIC_PATH, DEV_KEY
 from config import SONG_URL
 from utils import log
 
+MUSIC_META_NAME = 'name'
+MUSIC_META_VOL = 'volume'
+
 
 def get_music(vid):
     url = f"https://www.youtube.com/watch?v={vid}"
@@ -53,7 +56,7 @@ def get_song(song_name):
     if vid in music_meta.keys():
         return
     get_music(vid)
-    music_meta[vid] = {'name': song_name, 'volume': 100}
+    music_meta[vid] = {MUSIC_META_NAME: song_name, MUSIC_META_VOL: 100}
     json.dump(music_meta, open(MUSIC_META, 'w'))
     
 

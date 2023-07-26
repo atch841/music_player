@@ -1,11 +1,16 @@
 from flask import Flask
-from download_music import download_music, DOWNLOAD_STATUS
+from download_music import download_music, DOWNLOAD_STATUS, MUSIC_META_VOL, MUSIC_META_NAME
 from threading import Thread
+import subprocess
 import os
 import time
+import json
 
 from utils import read_log
-from config import MSTATUS
+from config import MSTATUS, MUSIC_META, FIFO_PATH, NOW_PLAYING, VOL_ALL
+
+
+p = subprocess.Popen(['/bin/sh', 'run_music.sh'])
 
 app = Flask(__name__)
 
@@ -25,13 +30,22 @@ def play():
 def stop():
     with open(MSTATUS, 'w') as file:
         file.write('stop')
+    os.system(f'echo -n q > {FIFO_PATH}')
     return 'stop'
 
 @app.route("/delete")
 def delete():
-    with open(MSTATUS, 'w') as file:
-        file.write('delete')
+    # with open(MSTATUS, 'w') as file:
+    #     file.write('delete')
+    with open(NOW_PLAYING, 'r') as file:
+        now = file.readline().strip()
+    os.system(f'echo -n q > {FIFO_PATH}')
+    if now:
+        os.remove(now)
+        print('remove', now)
+        log(f'remove {now}')
     return 'delete'
+
 
 @app.route('/download')
 def download():
@@ -50,6 +64,78 @@ def download_status():
         return status
     else:
         return 'Not downloading'
+
+@app.route('/vol_up_all')
+def vol_up_all():
+    if os.path.exists(VOL_ALL):
+        with open(VOL_ALL, 'r') as file:
+            vol = int(file.readline().strip())
+    else:
+        vol = 100
+    vol += 10
+    with open(VOL_ALL, 'w') as file:
+        file.write(str(vol))
+    os.system(f'echo -n + > {FIFO_PATH}')
+    return "all volume up"
+
+
+@app.route('/vol_down_all')
+def vol_up_all():
+    if os.path.exists(VOL_ALL):
+        with open(VOL_ALL, 'r') as file:
+            vol = int(file.readline().strip())
+    else:
+        vol = 100
+    vol -= 10
+    with open(VOL_ALL, 'w') as file:
+        file.write(str(vol))
+    os.system(f'echo -n - > {FIFO_PATH}')
+    return "all volume down"
+
+@app.route('/vol_up')
+def vol_up():
+    with open(NOW_PLAYING, 'r') as file:
+        now = file.readline().strip()
+    if now == "":
+        return
+    music_meta = json.load(open(MUSIC_META, 'r'))
+    # /path/to/music/vid.mp3 to vid
+    vid = now.split('/')[-1].split('.')[0]
+    if vid in music_meta:
+        vol = music_meta[vid][MUSIC_META_VOL]
+    else:
+        vol = 100
+        music_meta[vid] = {MUSIC_META_NAME: 'unknow', MUSIC_META_VOL: vol}
+    vol += 10
+    music_meta[vid][MUSIC_META_VOL] = vol
+    json.dump(music_meta, open(MUSIC_META, 'w'))
+    os.system(f'echo -n + > {FIFO_PATH}')
+
+@app.route('/vol_down')
+def vol_down():
+    with open(NOW_PLAYING, 'r') as file:
+        now = file.readline().strip()
+    if now == "":
+        return
+    music_meta = json.load(open(MUSIC_META, 'r'))
+    # /path/to/music/vid.mp3 to vid
+    vid = now.split('/')[-1].split('.')[0]
+    if vid in music_meta:
+        vol = music_meta[vid][MUSIC_META_VOL]
+    else:
+        vol = 100
+        music_meta[vid] = {MUSIC_META_NAME: 'unknow', MUSIC_META_VOL: vol}
+    vol -= 10
+    music_meta[vid][MUSIC_META_VOL] = vol
+    json.dump(music_meta, open(MUSIC_META, 'w'))
+    os.system(f'echo -n - > {FIFO_PATH}')
+
+@app.route('/update')
+def update():
+    os.system('git pull')
+    os.kill(p)
+    p = subprocess.Popen(['/bin/sh', 'run_music.sh'])
+
 
 
 if __name__ == '__main__':
