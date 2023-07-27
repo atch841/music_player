@@ -3,6 +3,7 @@ import json
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from pytube import YouTube
+from pytube.cli import on_progress
 import os
 import traceback
 
@@ -16,7 +17,7 @@ MUSIC_META_VOL = 'volume'
 
 def get_music(vid):
     url = f"https://www.youtube.com/watch?v={vid}"
-    yt = YouTube(url)
+    yt = YouTube(url, on_progress_callback=on_progress, use_oauth=True, allow_oauth_cache=True)
     print(vid + ".mp3")
     _filename = MUSIC_PATH + vid + ".mp3"
     if vid + ".mp3" not in os.listdir(MUSIC_PATH):
@@ -62,6 +63,7 @@ def get_song(song_name):
 
 def download_music():
     os.makedirs(os.path.dirname(DOWNLOAD_STATUS), exist_ok=True)
+    os.makedirs(MUSIC_PATH, exist_ok=True)
 
     r = requests.get(SONG_URL)
 

@@ -8,6 +8,7 @@ from config import MUSIC_PATH, MSTATUS, MUSIC_META, FIFO_PATH, NOW_PLAYING, VOL_
 from download_music import MUSIC_META_NAME, MUSIC_META_VOL
 
 now = ''
+cmd = ''
 
 try:
     os.mkfifo(FIFO_PATH)
@@ -16,11 +17,17 @@ except FileExistsError:
 
 while True:
     with open(MSTATUS, 'r') as file:
-        cmd = file.readline().strip()
+        new_cmd = file.readline().strip()
+        if new_cmd != cmd:
+            print(cmd)
+        cmd = new_cmd
 
-    with open(NOW_PLAYING, 'r') as file:
-        now = file.readline().strip()
-    print(cmd, now)
+    if os.path.exists(NOW_PLAYING):
+        with open(NOW_PLAYING, 'r') as file:
+            now = file.readline().strip()
+    else:
+        now = ""
+    # print(cmd, now)
 
     if cmd == 'play' and now == '':
         try:
@@ -45,22 +52,34 @@ while True:
             os.system(f'echo -n z > {FIFO_PATH}')
 
             # adjust volume
+            time.sleep(2)  # wait for the music to start
+            print(vol)
             while vol != 100:
+                time.sleep(0.5)
                 if vol > 100:
                     vol -= 10
+                    print('+')
                     os.system(f'echo -n + > {FIFO_PATH}')
                 elif vol < 100:
                     vol += 10
+                    print('-')
                     os.system(f'echo -n - > {FIFO_PATH}')
-                    
-            with open(VOL_ALL, 'r') as file:
-                vol_all = int(file.readline().strip())
+
+            if os.path.exists(VOL_ALL):
+                with open(VOL_ALL, 'r') as file:
+                    vol_all = int(file.readline().strip())
+            else:
+                vol_all = 100
+            print(vol_all)
             while vol_all != 100:
+                time.sleep(0.5)
                 if vol_all > 100:
                     vol_all -= 10
+                    print('+')
                     os.system(f'echo -n + > {FIFO_PATH}')
                 elif vol_all < 100:
                     vol_all += 10
+                    print('-')
                     os.system(f'echo -n - > {FIFO_PATH}')
 
         except Exception as e:

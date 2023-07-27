@@ -9,7 +9,6 @@ import json
 from utils import read_log
 from config import MSTATUS, MUSIC_META, FIFO_PATH, NOW_PLAYING, VOL_ALL
 
-
 p = subprocess.Popen(['/bin/sh', 'run_music.sh'])
 
 app = Flask(__name__)
@@ -76,11 +75,11 @@ def vol_up_all():
     with open(VOL_ALL, 'w') as file:
         file.write(str(vol))
     os.system(f'echo -n + > {FIFO_PATH}')
-    return "all volume up"
+    return f"all volume up {vol}"
 
 
 @app.route('/vol_down_all')
-def vol_up_all():
+def vol_down_all():
     if os.path.exists(VOL_ALL):
         with open(VOL_ALL, 'r') as file:
             vol = int(file.readline().strip())
@@ -90,14 +89,14 @@ def vol_up_all():
     with open(VOL_ALL, 'w') as file:
         file.write(str(vol))
     os.system(f'echo -n - > {FIFO_PATH}')
-    return "all volume down"
+    return f"all volume down {vol}"
 
 @app.route('/vol_up')
 def vol_up():
     with open(NOW_PLAYING, 'r') as file:
         now = file.readline().strip()
     if now == "":
-        return
+        return "no music playing"
     music_meta = json.load(open(MUSIC_META, 'r'))
     # /path/to/music/vid.mp3 to vid
     vid = now.split('/')[-1].split('.')[0]
@@ -110,13 +109,14 @@ def vol_up():
     music_meta[vid][MUSIC_META_VOL] = vol
     json.dump(music_meta, open(MUSIC_META, 'w'))
     os.system(f'echo -n + > {FIFO_PATH}')
+    return f'music vol up {vol}'
 
 @app.route('/vol_down')
 def vol_down():
     with open(NOW_PLAYING, 'r') as file:
         now = file.readline().strip()
     if now == "":
-        return
+        return "no music playing"
     music_meta = json.load(open(MUSIC_META, 'r'))
     # /path/to/music/vid.mp3 to vid
     vid = now.split('/')[-1].split('.')[0]
@@ -129,6 +129,7 @@ def vol_down():
     music_meta[vid][MUSIC_META_VOL] = vol
     json.dump(music_meta, open(MUSIC_META, 'w'))
     os.system(f'echo -n - > {FIFO_PATH}')
+    return f'music vol down {vol}'
 
 @app.route('/update')
 def update():
@@ -139,4 +140,4 @@ def update():
 
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=80)
+    app.run(debug=False, host='0.0.0.0', port=80)
