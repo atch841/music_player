@@ -33,7 +33,7 @@ while True:
         try:
             music_list = os.listdir(MUSIC_PATH)
             ind = random.randint(0, len(music_list) - 1)
-            print('omxplayer-pi ' + MUSIC_PATH + os.listdir(MUSIC_PATH)[ind])
+            print('omxplayer ' + MUSIC_PATH + os.listdir(MUSIC_PATH)[ind])
             
             music_meta = json.load(open(MUSIC_META, 'r'))
             vid = os.listdir(MUSIC_PATH)[ind].split('.')[0]
