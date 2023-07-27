@@ -11,7 +11,7 @@ FIFO_PATH = os.path.join(APP_FOLDER, 'fifo')
 NOW_PLAYING = os.path.join(APP_FOLDER, 'now_playing')
 VOL_ALL = os.path.join(APP_FOLDER, 'vol_all')
 OMX_CMD = 'omxplayer-pi'
-SONG_URL = 'https://kma.kkbox.com/charts/api/v1/yearly?category=297&lang=tc&limit=100&terr=tw&type=newrelease&year=2023'
+SONG_URL = 'https://www.youtube.com/playlist?list=PLzwWSJNcZTMSW-v1x6MhHFKkwrGaEgQ-L'
 
 os.makedirs(APP_FOLDER, exist_ok=True)
 if not os.path.exists(MSTATUS):

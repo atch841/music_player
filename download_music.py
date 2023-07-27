@@ -1,13 +1,14 @@
-import requests
 import json
-from googleapiclient.discovery import build
-from googleapiclient.errors import HttpError
-from pytube import YouTube
-from pytube.cli import on_progress
+import re
 import os
 import traceback
+import urllib.request
+import urllib
+from pytube import YouTube
+from pytube.cli import on_progress
+from pytube import Playlist
 
-from config import DOWNLOAD_STATUS, MUSIC_META, VID_LOOKUP, MUSIC_PATH, DEV_KEY
+from config import DOWNLOAD_STATUS, MUSIC_META, MUSIC_PATH
 from config import SONG_URL
 from utils import log
 
@@ -23,43 +24,34 @@ def get_music(vid):
     if vid + ".mp3" not in os.listdir(MUSIC_PATH):
         yt.streams.get_audio_only().download(filename=_filename)
 
-def get_vid(song_name):
-    if os.path.exists(VID_LOOKUP):
-        name_to_vid = json.load(open(VID_LOOKUP, 'r'))
-    else:
-        name_to_vid = {}
-
-    if song_name in name_to_vid.keys():
-        return name_to_vid[song_name]
-
-    if not os.path.exists(DEV_KEY):
-        print(f'DEV_KEY not exist, add your youtube api key to {DEV_KEY}')
-    with open(DEV_KEY,  'r') as file:
-        developerKey = file.read().strip()
-    youtube = build('youtube', 'v3', developerKey=developerKey)
-
-    request = youtube.search().list(part="snippet",q=song_name)
-    response = request.execute()
-
-    vid = response['items'][0]['id']['videoId']
-
-    name_to_vid[song_name] = vid
-    json.dump(name_to_vid, open(VID_LOOKUP, 'w'))
-
+def get_vid(song_url):
+    # get vid from song url
+    vid = song_url[song_url.find('=')+1:]
     return vid
 
-def get_song(song_name):
+def get_song_name(VideoID):
+    params = {"format": "json", "url": "https://www.youtube.com/watch?v=%s" % VideoID}
+    url = "https://www.youtube.com/oembed"
+    query_string = urllib.parse.urlencode(params)
+    url = url + "?" + query_string
+
+    with urllib.request.urlopen(url) as response:
+        response_text = response.read()
+        data = json.loads(response_text.decode())
+        return data['title']
+
+def get_song(song_url):
     if os.path.exists(MUSIC_META):
         music_meta = json.load(open(MUSIC_META, 'r'))
     else:
         music_meta = {}
 
-    vid = get_vid(song_name)
+    vid = get_vid(song_url)
 
     if vid in music_meta.keys():
         return
     get_music(vid)
-    music_meta[vid] = {MUSIC_META_NAME: song_name, MUSIC_META_VOL: 100}
+    music_meta[vid] = {MUSIC_META_NAME: get_song_name(vid), MUSIC_META_VOL: 100}
     json.dump(music_meta, open(MUSIC_META, 'w'))
     
 
@@ -67,18 +59,17 @@ def download_music():
     os.makedirs(os.path.dirname(DOWNLOAD_STATUS), exist_ok=True)
     os.makedirs(MUSIC_PATH, exist_ok=True)
 
-    r = requests.get(SONG_URL)
+    playlist = Playlist(SONG_URL)
 
-    song_name = []
-    for song in json.loads(r.text)['data']['charts']['newrelease']:
-        song_name.append(song['song_name'])
+    # this fixes the empty playlist.videos list
+    playlist._video_regex = re.compile(r"\"url\":\"(/watch\?v=[\w-]*)")
 
-    print('songs:', song_name)
+    urls = playlist.video_urls
 
-    for idx, song in enumerate(song_name):
+    for idx, song in enumerate(urls):
         with open(DOWNLOAD_STATUS, 'w') as file:
-            file.write(f'{idx}/{len(song_name)}')
-        log(f'downloading {song} ({idx}/{len(song_name)})')
+            file.write(f'{idx}/{len(urls)}')
+        log(f'downloading {song} ({idx}/{len(urls)})')
 
         try:
             get_song(song)
