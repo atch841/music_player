@@ -5,6 +5,7 @@ import json
 
 from utils import log
 from config import MUSIC_PATH, MSTATUS, MUSIC_META, FIFO_PATH, NOW_PLAYING, VOL_ALL
+from config import OMX_CMD
 from download_music import MUSIC_META_NAME, MUSIC_META_VOL
 
 now = ''
@@ -33,7 +34,6 @@ while True:
         try:
             music_list = os.listdir(MUSIC_PATH)
             ind = random.randint(0, len(music_list) - 1)
-            print('omxplayer ' + MUSIC_PATH + os.listdir(MUSIC_PATH)[ind])
             
             music_meta = json.load(open(MUSIC_META, 'r'))
             vid = os.listdir(MUSIC_PATH)[ind].split('.')[0]
@@ -47,7 +47,8 @@ while True:
             with open(NOW_PLAYING, 'w') as file:
                 file.write(music_path)
 
-            run_cmd = f'omxplayer {music_path} < {FIFO_PATH} && echo "" > {NOW_PLAYING} || echo "" > {NOW_PLAYING} &'
+            print(f'{OMX_CMD} {music_path}')
+            run_cmd = f'{OMX_CMD} {music_path} < {FIFO_PATH} && echo "" > {NOW_PLAYING} || echo "" > {NOW_PLAYING} &'
             os.system(run_cmd)
             os.system(f'echo -n z > {FIFO_PATH}')
 
