@@ -137,6 +137,18 @@ def update():
     os.kill(p)
     p = subprocess.Popen(['/bin/sh', 'run_music.sh'])
 
+@app.route('/now')
+def now():
+    with open(NOW_PLAYING, 'r') as file:
+        now = file.readline().strip()
+    if now == "":
+        return "no music playing"
+    music_meta = json.load(open(MUSIC_META, 'r'))
+    # /path/to/music/vid.mp3 to vid
+    vid = now.split('/')[-1].split('.')[0]
+    if vid in music_meta:
+        name = music_meta[vid][MUSIC_META_NAME]
+    return name
 
 
 if __name__ == '__main__':
