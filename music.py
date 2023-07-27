@@ -47,7 +47,7 @@ while True:
             with open(NOW_PLAYING, 'w') as file:
                 file.write(music_path)
 
-            run_cmd = f'omxplayer-pi {music_path} < {FIFO_PATH} && echo "" > {NOW_PLAYING} || echo "" > {NOW_PLAYING} &'
+            run_cmd = f'omxplayer {music_path} < {FIFO_PATH} && echo "" > {NOW_PLAYING} || echo "" > {NOW_PLAYING} &'
             os.system(run_cmd)
             os.system(f'echo -n z > {FIFO_PATH}')
 
