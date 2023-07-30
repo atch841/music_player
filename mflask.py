@@ -1,5 +1,4 @@
 from flask import Flask
-from download_music import download_music, DOWNLOAD_STATUS, MUSIC_META_VOL, MUSIC_META_NAME
 from threading import Thread
 import subprocess
 import os
@@ -7,9 +6,13 @@ import time
 import json
 
 from utils import read_log
+from download_music import download_music, DOWNLOAD_STATUS, MUSIC_META_VOL, MUSIC_META_NAME
 from config import MSTATUS, MUSIC_META, FIFO_PATH, NOW_PLAYING, VOL_ALL
+from player import Player
 
-p = subprocess.Popen(['/bin/sh', 'run_music.sh'])
+# p = subprocess.Popen(['/bin/sh', 'run_music.sh'])
+
+p = Player()
 
 app = Flask(__name__)
 
@@ -20,16 +23,18 @@ def log():
 
 @app.route("/play")
 def play():
-    with open(MSTATUS, 'w') as file:
-        file.write('play')
+    # with open(MSTATUS, 'w') as file:
+    #     file.write('play')
+    p.play()
 
     return 'play'
 
 @app.route("/stop")
 def stop():
-    with open(MSTATUS, 'w') as file:
-        file.write('stop')
-    os.system(f'echo -n q > {FIFO_PATH}')
+    # with open(MSTATUS, 'w') as file:
+    #     file.write('stop')
+    # os.system(f'echo -n q > {FIFO_PATH}')
+    p.stop()
     return 'stop'
 
 @app.route("/delete")
@@ -38,7 +43,8 @@ def delete():
     #     file.write('delete')
     with open(NOW_PLAYING, 'r') as file:
         now = file.readline().strip()
-    os.system(f'echo -n q > {FIFO_PATH}')
+    # os.system(f'echo -n q > {FIFO_PATH}')
+    p.stop()
     if now:
         os.remove(now)
         print('remove', now)
@@ -74,7 +80,8 @@ def vol_up_all():
     vol += 10
     with open(VOL_ALL, 'w') as file:
         file.write(str(vol))
-    os.system(f'echo -n + > {FIFO_PATH}')
+    # os.system(f'echo -n + > {FIFO_PATH}')
+    p.vol_up()
     return f"all volume up {vol}"
 
 
@@ -88,7 +95,8 @@ def vol_down_all():
     vol -= 10
     with open(VOL_ALL, 'w') as file:
         file.write(str(vol))
-    os.system(f'echo -n - > {FIFO_PATH}')
+    # os.system(f'echo -n - > {FIFO_PATH}')
+    p.vol_down()
     return f"all volume down {vol}"
 
 @app.route('/vol_up')
@@ -108,7 +116,8 @@ def vol_up():
     vol += 10
     music_meta[vid][MUSIC_META_VOL] = vol
     json.dump(music_meta, open(MUSIC_META, 'w'))
-    os.system(f'echo -n + > {FIFO_PATH}')
+    # os.system(f'echo -n + > {FIFO_PATH}')
+    p.vol_up()
     return f'music vol up {vol}'
 
 @app.route('/vol_down')
@@ -128,14 +137,15 @@ def vol_down():
     vol -= 10
     music_meta[vid][MUSIC_META_VOL] = vol
     json.dump(music_meta, open(MUSIC_META, 'w'))
-    os.system(f'echo -n - > {FIFO_PATH}')
+    # os.system(f'echo -n - > {FIFO_PATH}')
+    p.vol_down()
     return f'music vol down {vol}'
 
 @app.route('/update')
 def update():
     os.system('git pull')
-    os.kill(p)
-    p = subprocess.Popen(['/bin/sh', 'run_music.sh'])
+    # os.kill(p)
+    # p = subprocess.Popen(['/bin/sh', 'run_music.sh'])
 
 @app.route('/now')
 def now():
