@@ -74,10 +74,10 @@ def download_status():
 def vol_up_all():
     if os.path.exists(VOL_ALL):
         with open(VOL_ALL, 'r') as file:
-            vol = int(file.readline().strip())
+            vol = float(file.readline().strip())
     else:
         vol = 100
-    vol += 10
+    vol *= 2
     with open(VOL_ALL, 'w') as file:
         file.write(str(vol))
     # os.system(f'echo -n + > {FIFO_PATH}')
@@ -89,10 +89,10 @@ def vol_up_all():
 def vol_down_all():
     if os.path.exists(VOL_ALL):
         with open(VOL_ALL, 'r') as file:
-            vol = int(file.readline().strip())
+            vol = float(file.readline().strip())
     else:
         vol = 100
-    vol -= 10
+    vol /= 2
     with open(VOL_ALL, 'w') as file:
         file.write(str(vol))
     # os.system(f'echo -n - > {FIFO_PATH}')
@@ -113,7 +113,7 @@ def vol_up():
     else:
         vol = 100
         music_meta[vid] = {MUSIC_META_NAME: 'unknow', MUSIC_META_VOL: vol}
-    vol += 10
+    vol *= 2
     music_meta[vid][MUSIC_META_VOL] = vol
     json.dump(music_meta, open(MUSIC_META, 'w'))
     # os.system(f'echo -n + > {FIFO_PATH}')
@@ -134,7 +134,7 @@ def vol_down():
     else:
         vol = 100
         music_meta[vid] = {MUSIC_META_NAME: 'unknow', MUSIC_META_VOL: vol}
-    vol -= 10
+    vol /= 2
     music_meta[vid][MUSIC_META_VOL] = vol
     json.dump(music_meta, open(MUSIC_META, 'w'))
     # os.system(f'echo -n - > {FIFO_PATH}')

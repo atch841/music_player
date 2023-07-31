@@ -34,7 +34,7 @@ class Player:
 
         if os.path.exists(VOL_ALL):
             with open(VOL_ALL, 'r') as file:
-                self.vol_all = int(file.readline().strip())
+                self.vol_all = float(file.readline().strip())
         else:
             self.vol_all = 100
 
@@ -45,36 +45,44 @@ class Player:
 
         def next_song(_, exit_code):
             print('exit:', exit_code)
-            if exit_code != 3:
+            if exit_code != -15:
                 global player
                 music_path = self.select_song()
                 player = OMXPlayer(music_path)
                 player.exitEvent += next_song
 
                 # adjust volume
-                time.sleep(2.5)  # wait for the music to start
-                set_vol = (self.vol + self.vol_all - 100) / 100
+                set_vol = (self.vol * self.vol_all) / 10000
                 print('vol:', set_vol)
                 player.set_volume(set_vol)
+                for i in range(5):
+                    time.sleep(0.5)  # wait for the music to start
+                    player.set_volume(set_vol)
 
         global player
+        try:
+            player.quit()
+        except Exception as e:
+            print('quit', e)
         player = OMXPlayer(music_path)
         player.exitEvent += next_song
 
         # adjust volume
-        time.sleep(2.5)  # wait for the music to start
-        set_vol = (self.vol + self.vol_all - 100) / 100
+        set_vol = (self.vol * self.vol_all) / 10000
         print('vol:', set_vol)
         player.set_volume(set_vol)
+        for i in range(5):
+            time.sleep(0.5)  # wait for the music to start
+            player.set_volume(set_vol)
         
     def stop(self):
         global player
-        player.stop()
+        player.quit()
 
     def vol_up(self):
         global player
-        player.set_volume(player.volume() + 0.1)
+        player.set_volume(player.volume() * 2)
 
     def vol_down(self):
         global player
-        player.set_volume(player.volume() - 0.1)
+        player.set_volume(player.volume() / 2)

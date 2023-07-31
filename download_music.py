@@ -32,6 +32,8 @@ def get_vid(song_name):
     if song_name in name_to_vid.keys():
         return name_to_vid[song_name]
 
+    if not os.path.exists(DEV_KEY):
+        print(f'DEV_KEY not exist, add your youtube api key to {DEV_KEY}')
     with open(DEV_KEY,  'r') as file:
         developerKey = file.read().strip()
     youtube = build('youtube', 'v3', developerKey=developerKey)
@@ -80,7 +82,8 @@ def download_music():
 
         try:
             get_song(song)
-        except  Exception:
+        except Exception:
+            print(traceback.format_exc())
             log(str(traceback.format_exc()))
     os.remove(DOWNLOAD_STATUS)
 
