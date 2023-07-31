@@ -11,7 +11,7 @@ FIFO_PATH = os.path.join(APP_FOLDER, 'fifo')
 NOW_PLAYING = os.path.join(APP_FOLDER, 'now_playing')
 VOL_ALL = os.path.join(APP_FOLDER, 'vol_all')
 OMX_CMD = 'omxplayer-pi'
-SONG_URL = 'https://www.youtube.com/playlist?list=PL5qh1a9hXNSd9ReRdKyuYysCdGVhCmouz'
+SONG_URL = 'https://www.youtube.com/playlist?list=PL8_hwOreZ6BR3LTCkCdkrBUNL1jdznPrp'
 
 os.makedirs(APP_FOLDER, exist_ok=True)
 if not os.path.exists(MSTATUS):
